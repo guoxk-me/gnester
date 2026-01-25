@@ -1,143 +1,168 @@
 # AGENTS.md
 
-This file contains guidelines and commands for agentic coding agents working in this NestJS repository.
+This file establishes the comprehensive protocols and technical guidelines for agentic coding agents working in this NestJS repository.
 
-## Build Commands
+## 🛑 Critical Protocols / 关键协议
 
-### Development
+### 1. Communication & Language / 沟通与语言
 
-- `pnpm run start` - Start the application in development mode
-- `pnpm run start:dev` - Start with watch mode (auto-restart on changes)
-- `pnpm run start:debug` - Start with debugging enabled
+- **Bilingual Responses**: You MUST reply in both English and Chinese. / 必须使用中英双语回复。
+- **Bilingual Comments**: All code comments must be bilingual (English + Chinese). / 所有代码注释必须是双语的（中文+英文）。
+- **No Pleasantries**: Skip "I understand", "Here is the code", etc. Go straight to the solution. / 禁止客套话，直接回答。
+- **Evidence-Based**: Do not guess. If unsure, verify or ask. Distinguish facts from assumptions. / 拒绝瞎猜，以事实为据。
 
-### Production
+### 2. Execution Standards / 执行标准
 
-- `pnpm run build` - Build the application for production
-- `pnpm run start:prod` - Start the production build
+- **Plan First**: For non-trivial tasks, create a plan before editing code. / 复杂任务先制定计划。
+- **Read Before Write**: Always read relevant files before making changes. / 修改前必读相关文件。
+- **Verify**: Run tests (`pnpm run test`) after changes to ensure stability. / 修改后务必运行测试。
 
-### Code Quality
+---
 
-- `pnpm run lint` - Run ESLint with auto-fix
-- `pnpm run format` - Format code with Prettier
+## 🛠 Project Commands / 项目命令
 
-### Testing
+### Build & Run / 构建与运行
 
-- `pnpm run test` - Run all unit tests
-- `pnpm run test:watch` - Run tests in watch mode
-- `pnpm run test:cov` - Run tests with coverage report
-- `pnpm run test:e2e` - Run end-to-end tests
-- `pnpm run test -- <test-file>` - Run a single test file (e.g., `pnpm run test -- app.controller.spec.ts`)
+- **Development**: `pnpm run start:dev`
+  - Starts the application in watch mode with `.env.development`.
+  - Use this for active development.
+- **Production Build**: `pnpm run build`
+  - Compiles TypeScript to `dist/`.
+  - Run this to verify build stability before completing tasks.
+- **Production Start**: `pnpm run start:prod`
+  - Runs the compiled code from `dist/main`.
 
-## Code Style Guidelines
+### Code Quality / 代码质量
 
-### TypeScript Configuration
+- **Linting**: `pnpm run lint`
+  - Runs ESLint to catch and fix static analysis issues.
+  - **Rule**: Always run this before finishing a task.
+- **Formatting**: `pnpm run format`
+  - Formats all files using Prettier.
 
-- Target: ES2023
-- Module system: NodeNext with ES modules
-- Strict mode enabled with some relaxed rules
-- Decorators enabled for NestJS
+### Testing / 测试
 
-### Import Style
+- **Run All Tests**: `pnpm run test`
+  - Executes all unit tests (`*.spec.ts`).
+- **Run Single Test**: `pnpm run test -- src/path/to/file.spec.ts`
+  - **Crucial**: Use this when working on a specific feature to save time.
+- **E2E Tests**: `pnpm run test:e2e`
+  - Runs end-to-end tests located in `test/`.
+  - Uses a separate configuration `test/jest-e2e.json`.
+- **Coverage**: `pnpm run test:cov`
+  - Generates a coverage report in `coverage/`.
 
-- Use ES module imports (`import { } from 'module'`)
-- NestJS imports first, then third-party, then local imports
-- Example import order:
+---
+
+## 📐 Code Style & Patterns / 代码风格与模式
+
+### 1. General Architecture
+
+- **Framework**: NestJS (v11+) with NodeNext module system.
+- **Language**: TypeScript (ES2023, Strict Mode).
+- **Style**: Functional where possible, Object-Oriented for DI.
+- **Module Pattern**:
+  - `imports`: Other modules, TypeORM entities.
+  - `providers`: Services, strategies, guards.
+  - `controllers`: API endpoints.
+  - `exports`: Services used by other modules.
+
+### 2. File Structure & Naming
+
+- **Directory Structure**:
+  ```
+  src/
+  ├── config/                # YAML configs + Loaders + Validators
+  ├── common/                # Shared decorators, filters, guards
+  ├── features/              # Business logic modules (e.g., demo/)
+  │   └── [feature]/
+  │       ├── dto/           # Request/Response DTOs
+  │       ├── entities/      # TypeORM Entities
+  │       ├── *.controller.ts
+  │       └── *.service.ts
+  └── main.ts                # Application entry
+  ```
+- **Naming Conventions**:
+  - **Files**: `kebab-case` (e.g., `user-profile.service.ts`).
+  - **Classes**: `PascalCase` (e.g., `UserProfileService`).
+  - **Methods/Variables**: `camelCase` (e.g., `findActiveUsers`).
+  - **Interfaces**: `PascalCase` (No `I` prefix).
+  - **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRY_COUNT`).
+
+### 3. TypeScript Guidelines
+
+- **Strict Typing**: Avoid `any`. Use `unknown` if necessary.
+- **Explicit Returns**: Always define return types for Controller methods and Service public methods.
   ```typescript
-  import { Controller, Get } from '@nestjs/common';
-  import { ExternalService } from 'external-package';
-  import { LocalService } from './local.service';
+  // Good
+  async findAll(): Promise<User[]> { ... }
+  ```
+- **Interfaces vs Types**: Prefer `interface` for object shapes, `type` for unions/tuples.
+
+### 4. Configuration Pattern
+
+- **YAML Based**: Configuration is stored in `config/*.yaml`.
+- **Loader**: Use `configuration.ts` to load YAML.
+- **Validation**: Use `validation.ts` with `class-validator` to ensure config integrity.
+- **Usage**: Inject `ConfigService` to access values.
+  ```typescript
+  constructor(private configService: ConfigService) {}
+  const port = this.configService.get<number>('port');
   ```
 
-### Formatting (Prettier)
+### 5. Database (TypeORM)
 
-- Single quotes for strings
-- Trailing commas for all objects/arrays
-- 2-space indentation
-- Auto line ending detection
+- **Entities**: Use `@Entity()` decorator.
+- **Columns**: MUST include comments describing the field.
+  ```typescript
+  @Column({ comment: 'User email address', unique: true })
+  email: string;
+  ```
+- **Readonly**: Use `readonly` for fields that shouldn't change (like `id`, `createdAt`).
+- **Repositories**: Inject using `@InjectRepository(Entity)`.
 
-### ESLint Rules
+### 6. DTOs & Validation
 
-- `@typescript-eslint/no-explicit-any`: disabled (any allowed)
-- `@typescript-eslint/no-floating-promises`: warning (async/await handling)
-- `@typescript-eslint/no-unsafe-argument`: warning (type safety)
-- Prettier integration enforced
+- **Location**: Place in `dto/` folder within the feature module.
+- **Class Validator**: Use decorators heavily (`@IsString()`, `@IsInt()`, `@IsOptional()`).
+- **Class Transformer**: Use `@Type(() => Number)` if transformation is needed.
+- **Strictness**: Global validation pipe is likely enabled (check `main.ts`).
+- **Example**:
+  ```typescript
+  export class CreateUserDto {
+    @IsString()
+    @IsNotEmpty()
+    readonly username: string;
+  }
+  ```
 
-### Naming Conventions
+### 7. Error Handling
 
-- Classes: PascalCase (e.g., `AppController`, `AppService`)
-- Methods/variables: camelCase (e.g., `getHello`, `configService`)
-- Files: kebab-case for features (e.g., `user-profile.service.ts`)
-- Test files: `.spec.ts` suffix for unit tests, `.e2e-spec.ts` for e2e tests
+- **Exceptions**: Use standard NestJS exceptions (`NotFoundException`, `BadRequestException`).
+- **Filters**: Custom exception filters should be in `common/filters`.
+- **Async/Await**: Always use `try/catch` or let NestJS global error filter handle synchronous errors. Avoid unhandled promise rejections.
 
-### NestJS Patterns
+### 8. Imports Order
 
-- Use dependency injection via constructor
-- Decorators for controllers, methods, and properties
-- Modules for organizing related components
-- DTOs with class-validator for request/response validation
+1. **NestJS**: `@nestjs/*`
+2. **Third Party**: `typeorm`, `rxjs`, etc.
+3. **Internal - Absolute**: `src/common/*` (if alias configured)
+4. **Internal - Relative**: `../dto`, `./user.service`
 
-### Error Handling
+---
 
-- Use NestJS built-in exception filters
-- Create custom exceptions when needed
-- Validate environment variables with class-validator
-- Use try-catch for external service calls
+## 🔍 Development Workflow / 开发工作流
 
-### Configuration
+1.  **Analysis**: Read `package.json`, `nest-cli.json`, and related `*.spec.ts` files.
+2.  **Implementation**:
+    - Create DTOs first.
+    - Define Entity changes.
+    - Implement Service logic.
+    - Expose via Controller.
+3.  **Validation**:
+    - Run `pnpm run format` to fix style.
+    - Run `pnpm run lint` to catch errors.
+    - Run `pnpm run test -- [file]` to verify logic.
+4.  **Refactor**: Ensure no `console.log` remains. Ensure comments are bilingual.
 
-- Environment variables loaded via @nestjs/config
-- YAML configuration files in `config/` directory
-- Validation using class-validator decorators
-- Separate configuration for different environments
-
-### Testing Patterns
-
-- Unit tests: `.spec.ts` files alongside source files
-- E2E tests: in `test/` directory with `.e2e-spec.ts` suffix
-- Use NestJS TestingModule for unit tests
-- Use supertest for HTTP testing in e2e tests
-- Mock external dependencies in tests
-
-### File Structure
-
-```
-src/
-├── app.module.ts          # Root module
-├── main.ts                # Application entry point
-├── common/                # Shared utilities
-├── features/              # Feature modules
-├── config/                # Configuration files
-└── *.spec.ts             # Unit tests
-
-test/
-└── *.e2e-spec.ts         # End-to-end tests
-```
-
-### Package Management
-
-- Uses pnpm as package manager
-- Install dependencies: `pnpm install`
-- Lock file: `pnpm-lock.yaml`
-
-### Git Hooks
-
-- Pre-commit hooks run linting automatically
-- Always run `pnpm run lint` before committing if hooks are bypassed
-
-## Development Workflow
-
-1. Make changes to source code
-2. Run `pnpm run lint` to check code quality
-3. Run `pnpm run test` to verify tests pass
-4. Run `pnpm run format` to ensure consistent formatting
-5. Test the application with `pnpm run start:dev`
-6. Build with `pnpm run build` before deployment
-
-## Important Notes
-
-- This is a NestJS TypeScript application
-- Uses ES modules (import/export syntax)
-- Configuration via YAML files and environment variables
-- Jest for testing with both unit and e2e test suites
-- ESLint + Prettier for code quality and formatting
-- No existing Cursor or Copilot rules to follow
+_(Agent Note: This file is the source of truth. If you encounter patterns in the code that contradict this, ask for clarification or follow the code if it seems newer/dominant, but document the discrepancy.)_
