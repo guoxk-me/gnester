@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as yaml from 'js-yaml';
 import { plainToInstance } from 'class-transformer';
-import { validateSync } from 'class-validator';
+import { IsString, validateSync } from 'class-validator';
 
 const YAML_CONFIG_FILENAME = 'config.yaml';
 
-class YamlVariables {}
+class YamlVariables {
+  @IsString()
+  test: string;
+}
 
 // 定义缓存变量
 
