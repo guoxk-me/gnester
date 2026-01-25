@@ -16,7 +16,10 @@ import configuration from 'config/configuration';
       validate,
     }),
     TypeOrmModule.forRootAsync(databaseConfig.asProvider()),
-    CacheModule.registerAsync(redisConfig.asProvider()),
+    CacheModule.registerAsync({
+      ...redisConfig.asProvider(),
+      isGlobal: true,
+    }),
     DemoModule,
   ],
   controllers: [AppController],

@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateDemoDto } from './dto/create-demo.dto';
 import { UpdateDemoDto } from './dto/update-demo.dto';
 import { Demo } from './entities/demo.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 @Injectable()
 export class DemoService {
   constructor(
     @InjectRepository(Demo)
     private readonly demoRepository: Repository<Demo>,
     private readonly dataSource: DataSource,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
   async create(createDemoDto: CreateDemoDto) {
     await this.demoRepository.save(createDemoDto);
@@ -19,6 +21,7 @@ export class DemoService {
   }
 
   findAll() {
+    this.cacheManager.set('foo', 'bar', 0);
     return `This action returns all demo`;
   }
 
