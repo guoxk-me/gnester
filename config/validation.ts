@@ -16,6 +16,8 @@ class EnvironmentVariables {
   @Min(0)
   @Max(65535)
   PORT: number;
+
+  DB_SYNCHRONIZE: boolean;
 }
 
 export function validate(config: Record<string, unknown>) {
