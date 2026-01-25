@@ -1,12 +1,15 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, Max, Min, validateSync } from 'class-validator';
-
-enum Environment {
-  Development = 'development',
-  Production = 'production',
-  Test = 'test',
-  Provision = 'provision',
-}
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator';
+import { DbConnection, Environment } from './config.enums';
 
 class EnvironmentVariables {
   @IsEnum(Environment)
@@ -17,7 +20,47 @@ class EnvironmentVariables {
   @Max(65535)
   PORT: number;
 
-  DB_SYNCHRONIZE: boolean;
+  @IsEnum(DbConnection)
+  @IsOptional()
+  DB_TYPE: DbConnection = DbConnection.MYSQL;
+
+  @IsString()
+  @IsOptional()
+  DB_HOST: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(65535)
+  DB_PORT: number;
+
+  @IsString()
+  @IsOptional()
+  DB_USERNAME: string;
+
+  @IsString()
+  @IsOptional()
+  DB_PASSWORD: string;
+
+  @IsString()
+  @IsOptional()
+  DB_DATABASE: string;
+
+  @IsString()
+  @IsOptional()
+  DB_SYNCHRONIZE?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  DB_AUTO_LOAD_ENTITIES: boolean = true;
+
+  @IsNumber()
+  @IsOptional()
+  DB_RETRY_ATTEMPTS: number = 10;
+
+  @IsNumber()
+  @IsOptional()
+  DB_RETRY_DELAY: number = 3000;
 }
 
 export function validate(config: Record<string, unknown>) {

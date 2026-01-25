@@ -1,39 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as yaml from 'js-yaml';
-import { plainToInstance, Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsInt,
-  IsString,
-  ValidateNested,
-  validateSync,
-} from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 
 const YAML_CONFIG_FILENAME = 'config.yaml';
 
-class DatabaseConfig {
-  @IsInt()
-  retryAttempts: number;
+class YamlVariables {}
 
-  @IsInt()
-  retryDelay: number;
-
-  @IsBoolean()
-  autoLoadEntities: boolean;
-
-  @IsString()
-  type: string;
-
-  @IsString()
-  database: string;
-}
-
-class YamlVariables {
-  @ValidateNested()
-  @Type(() => DatabaseConfig)
-  db: DatabaseConfig;
-}
+// 定义缓存变量
 
 export default () => {
   const configYaml = readFileSync(
@@ -55,5 +30,5 @@ export default () => {
     throw new Error(errors.toString());
   }
 
-  return config;
+  return validatedConfig;
 };

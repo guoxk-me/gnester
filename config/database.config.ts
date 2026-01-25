@@ -1,23 +1,20 @@
 import { registerAs } from '@nestjs/config';
-import configuration from './configuration';
+import { DbConnection } from './config.enums';
+
 export default registerAs('database', () => {
-  const db = configuration().db as {
-    type: 'mysql' | 'postgres' | 'sqlite' | 'better-sqlite3' | 'mongodb';
-    retryAttempts: number;
-    retryDelay: number;
-    autoLoadEntities: boolean;
-  };
   return {
-    type: db.type,
+    type: (process.env.DB_TYPE || 'mysql') as DbConnection,
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306', 10),
     username: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'test',
     // entities: [],
-    synchronize: process.env.DB_SYNCHRONIZE === 'true',
-    autoLoadEntities: db.autoLoadEntities,
-    retryAttempts: db.retryAttempts || 10,
-    retryDelay: db.retryDelay || 3000,
+    synchronize:
+      process.env.NODE_ENV !== 'production' &&
+      process.env.DB_SYNCHRONIZE === 'true',
+    autoLoadEntities: process.env.DB_AUTO_LOAD_ENTITIES === 'true',
+    retryAttempts: parseInt(process.env.DB_RETRY_ATTEMPTS || '10', 10),
+    retryDelay: parseInt(process.env.DB_RETRY_DELAY || '3000', 10),
   };
 });

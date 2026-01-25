@@ -1,6 +1,0 @@
-db:
-  type: mysql
-  database: test
-  retryAttempts: 5
-  retryDelay: 3000
-  autoLoadEntities: true
