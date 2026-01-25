@@ -2,11 +2,17 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as yaml from 'js-yaml';
 import { plainToInstance, Type } from 'class-transformer';
-import { IsBoolean, IsInt, ValidateNested, validateSync } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsString,
+  ValidateNested,
+  validateSync,
+} from 'class-validator';
 
 const YAML_CONFIG_FILENAME = 'config.yaml';
 
-class  DatabaseConfig {
+class DatabaseConfig {
   @IsInt()
   retryAttempts: number;
 
@@ -15,22 +21,30 @@ class  DatabaseConfig {
 
   @IsBoolean()
   autoLoadEntities: boolean;
+
+  @IsString()
+  type: string;
+
+  @IsString()
+  database: string;
 }
 
-class EnvironmentVariables {
-
+class YamlVariables {
   @ValidateNested()
   @Type(() => DatabaseConfig)
-  db:DatabaseConfig;
+  db: DatabaseConfig;
 }
 
 export default () => {
-  const config =  readFileSync(join(__dirname, YAML_CONFIG_FILENAME), 'utf8')
+  const configYaml = readFileSync(
+    join(__dirname, YAML_CONFIG_FILENAME),
+    'utf8',
+  );
+  const config = yaml.load(configYaml) as Record<string, any>;
   // validate the configuration object 校验配置对象
-  const validatedConfig = plainToInstance(EnvironmentVariables, config, {
+  const validatedConfig = plainToInstance(YamlVariables, config, {
     enableImplicitConversion: true,
   });
-
 
   // Don't skip missing fields(property) 不跳过缺失字段
   const errors = validateSync(validatedConfig, {
@@ -41,7 +55,5 @@ export default () => {
     throw new Error(errors.toString());
   }
 
-  return yaml.load(
-    config
-  ) as Record<string, any>;
+  return config;
 };
