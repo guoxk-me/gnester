@@ -39,13 +39,13 @@ export class DemoService {
   }
 
   // use transaction to create many demo records 使用事务创建多条记录
-  async createMany(createDemoDtoArrays: CreateDemoDto[]) {
+  async createMany(createDemoDtos: CreateDemoDto[]) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      await queryRunner.manager.save(createDemoDtoArrays[0]);
-      await queryRunner.manager.save(createDemoDtoArrays[1]);
+      await queryRunner.manager.save(createDemoDtos[0]);
+      await queryRunner.manager.save(createDemoDtos[1]);
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -54,5 +54,9 @@ export class DemoService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  findManyByIds(ids: number[]) {
+    return `This action returns demo records with ids: ${ids.join(', ')}`;
   }
 }

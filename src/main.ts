@@ -7,12 +7,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
-
   app.useGlobalPipes(
     new ValidationPipe({
       disableErrorMessages: process.env.NODE_ENV === 'production',
       whitelist: true,
       forbidNonWhitelisted: true,
+      // automatically transform payloads to be objects typed according to their DTO classes
       transform: true,
     }),
   );

@@ -6,6 +6,11 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
+  UsePipes,
+  ValidationPipe,
+  ParseArrayPipe,
+  Query,
 } from '@nestjs/common';
 import { DemoService } from './demo.service';
 import { CreateDemoDto } from './dto/create-demo.dto';
@@ -25,14 +30,16 @@ export class DemoController {
     return this.demoService.findAll();
   }
 
+  // transform id to number using ParseIntPipe
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.demoService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.demoService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDemoDto: UpdateDemoDto) {
-    return this.demoService.update(+id, updateDemoDto);
+  // Implicit conversion with transform option in ValidationPipe
+  update(@Param('id') id: number, @Body() updateDemoDto: UpdateDemoDto) {
+    return this.demoService.update(id, updateDemoDto);
   }
 
   @Delete(':id')
@@ -40,8 +47,20 @@ export class DemoController {
     return this.demoService.remove(+id);
   }
 
+  @Get()
+  findManyByIds(
+    @Query('ids', new ParseArrayPipe({ items: Number, separator: ',' }))
+    ids: number[],
+  ) {
+    return this.demoService.findManyByIds(ids);
+  }
+
   @Post()
-  createMany(@Body() createDemoDtoArrays: CreateDemoDto[]) {
-    return this.demoService.createMany(createDemoDtoArrays);
+  createMany(
+    // use ParseArrayPipe to validate an array of CreateDemoDto
+    @Body(new ParseArrayPipe({ items: CreateDemoDto }))
+    createDemoDtos: CreateDemoDto[],
+  ) {
+    return this.demoService.createMany(createDemoDtos);
   }
 }
