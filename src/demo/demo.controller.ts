@@ -11,10 +11,14 @@ import {
   ValidationPipe,
   ParseArrayPipe,
   Query,
+  UseInterceptors,
+  SerializeOptions,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { DemoService } from './demo.service';
 import { CreateDemoDto } from './dto/create-demo.dto';
 import { UpdateDemoDto } from './dto/update-demo.dto';
+import { Demo } from './entities/demo.entity';
 
 @Controller('demo')
 export class DemoController {
@@ -30,6 +34,15 @@ export class DemoController {
     return this.demoService.findAll();
   }
 
+  // use SerializeOptions to exclude properties with specified prefixes
+  @SerializeOptions({
+    // exclude properties with prefix '_'
+    excludePrefixes: ['_'],
+    // use type Demo to specify the class for serialization
+    type: Demo,
+  })
+  // use ClassSerializerInterceptor to enable class-transformer decorators
+  @UseInterceptors(ClassSerializerInterceptor)
   // transform id to number using ParseIntPipe
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
