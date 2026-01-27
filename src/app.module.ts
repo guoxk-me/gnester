@@ -9,6 +9,7 @@ import { DemoModule } from './demo/demo.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import redisConfig from 'config/redis.config';
 import configuration from 'config/configuration';
+import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +22,7 @@ import configuration from 'config/configuration';
       isGlobal: true,
     }),
     DemoModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateDemoDto } from './dto/create-demo.dto';
 import { UpdateDemoDto } from './dto/update-demo.dto';
 import { Demo } from './entities/demo.entity';
@@ -6,8 +6,10 @@ import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { Cron } from '@nestjs/schedule';
 @Injectable()
 export class DemoService {
+  private readonly logger = new Logger(DemoService.name);
   constructor(
     @InjectRepository(Demo)
     private readonly demoRepository: Repository<Demo>,
@@ -58,5 +60,10 @@ export class DemoService {
 
   findManyByIds(ids: number[]) {
     return `This action returns demo records with ids: ${ids.join(', ')}`;
+  }
+
+  @Cron('45 * * * * *')
+  testScheduleTask() {
+    this.logger.debug('Called when the current second is 45');
   }
 }
