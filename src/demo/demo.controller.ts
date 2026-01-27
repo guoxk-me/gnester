@@ -14,13 +14,20 @@ import {
   UseInterceptors,
   SerializeOptions,
   ClassSerializerInterceptor,
+  Version,
+  VERSION_NEUTRAL,
 } from '@nestjs/common';
 import { DemoService } from './demo.service';
 import { CreateDemoDto } from './dto/create-demo.dto';
 import { UpdateDemoDto } from './dto/update-demo.dto';
 import { Demo } from './entities/demo.entity';
 
-@Controller('demo')
+@Controller({
+  // version: '1',
+  // cancel versioning for this controller
+  version: VERSION_NEUTRAL,
+  path: 'demo',
+})
 export class DemoController {
   constructor(private readonly demoService: DemoService) {}
 
@@ -29,6 +36,7 @@ export class DemoController {
     return this.demoService.create(createDemoDto);
   }
 
+  @Version('2')
   @Get()
   findAll() {
     return this.demoService.findAll();
