@@ -6,7 +6,7 @@ import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 @Injectable()
 export class DemoService {
   private readonly logger = new Logger(DemoService.name);
@@ -62,8 +62,21 @@ export class DemoService {
     return `This action returns demo records with ids: ${ids.join(', ')}`;
   }
 
+  // use cron expression
   @Cron('45 * * * * *')
   testScheduleTask() {
     this.logger.debug('Called when the current second is 45');
+  }
+
+  // use enum
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  testScheduleEnum() {
+    this.logger.debug('Called every 10 seconds');
+  }
+
+  // use specific date
+  @Cron(new Date(Date.now() + 3000))
+  testScheduleDate() {
+    this.logger.debug('Called at a specific date');
   }
 }
