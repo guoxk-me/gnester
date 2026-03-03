@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 @Injectable()
 export class DemoService {
   private readonly logger = new Logger(DemoService.name);
@@ -78,5 +79,13 @@ export class DemoService {
   @Cron(new Date(Date.now() + 3000))
   testScheduleDate() {
     this.logger.debug('Called at a specific date');
+  }
+
+  //dynamic cron job
+  createDynamicCronJob() {
+    const job = new CronJob('5 * * * * *', () => {
+      this.logger.debug('Called every 5 seconds from dynamic job');
+    });
+    job.start();
   }
 }
