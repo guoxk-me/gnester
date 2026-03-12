@@ -26,6 +26,8 @@ This file establishes the comprehensive protocols and technical guidelines for a
 - **Development**: `pnpm run start:dev`
   - Starts the application in watch mode with `.env.development`.
   - Use this for active development.
+- **Debug**: `pnpm run start:debug`
+  - Starts with Node debugger enabled.
 - **Production Build**: `pnpm run build`
   - Compiles TypeScript to `dist/`.
   - Run this to verify build stability before completing tasks.
@@ -39,6 +41,7 @@ This file establishes the comprehensive protocols and technical guidelines for a
   - **Rule**: Always run this before finishing a task.
 - **Formatting**: `pnpm run format`
   - Formats all files using Prettier.
+  - Config: `singleQuote: true`, `trailingComma: all`
 
 ### Testing / 测试
 
@@ -46,11 +49,15 @@ This file establishes the comprehensive protocols and technical guidelines for a
   - Executes all unit tests (`*.spec.ts`).
 - **Run Single Test**: `pnpm run test -- src/path/to/file.spec.ts`
   - **Crucial**: Use this when working on a specific feature to save time.
+- **Watch Mode**: `pnpm run test:watch`
+  - Runs tests in watch mode for development.
+- **Debug Test**: `pnpm run test:debug`
+  - Debug tests with Node inspector.
 - **E2E Tests**: `pnpm run test:e2e`
   - Runs end-to-end tests located in `test/`.
-  - Uses a separate configuration `test/jest-e2e.json`.
+  - Uses separate config `test/jest-e2e.json`.
 - **Coverage**: `pnpm run test:cov`
-  - Generates a coverage report in `coverage/`.
+  - Generates coverage report in `coverage/`.
 
 ---
 
@@ -136,13 +143,14 @@ This file establishes the comprehensive protocols and technical guidelines for a
   }
   ```
 
-### 7. Error Handling
+### 7. Error Handling / 错误处理
 
 - **Exceptions**: Use standard NestJS exceptions (`NotFoundException`, `BadRequestException`).
 - **Filters**: Custom exception filters should be in `common/filters`.
 - **Async/Await**: Always use `try/catch` or let NestJS global error filter handle synchronous errors. Avoid unhandled promise rejections.
+- **No Console**: Never use `console.log`. Use proper logging instead.
 
-### 8. Imports Order
+### 8. Imports Order / 导入顺序
 
 1. **NestJS**: `@nestjs/*`
 2. **Third Party**: `typeorm`, `rxjs`, etc.
