@@ -1,1 +1,5 @@
-test: test
+app:
+  name: gnester
+
+cache:
+  ttl: 60000

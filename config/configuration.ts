@@ -1,24 +1,49 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as yaml from 'js-yaml';
-import { plainToInstance } from 'class-transformer';
-import { IsString, validateSync } from 'class-validator';
+import { plainToInstance, Type } from 'class-transformer';
+import {
+  IsNumber,
+  IsObject,
+  IsString,
+  Max,
+  Min,
+  ValidateNested,
+  validateSync,
+} from 'class-validator';
 
 const YAML_CONFIG_FILENAME = 'config.yaml';
 
-class YamlVariables {
+class AppVariables {
   @IsString()
-  test: string;
+  name: string;
 }
 
-// 定义缓存变量
+class CacheVariables {
+  @IsNumber()
+  @Min(0)
+  @Max(86_400_000)
+  ttl: number;
+}
+
+class YamlVariables {
+  @IsObject()
+  @ValidateNested()
+  @Type(() => AppVariables)
+  app: AppVariables;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => CacheVariables)
+  cache: CacheVariables;
+}
 
 export default () => {
   const configYaml = readFileSync(
     join(__dirname, YAML_CONFIG_FILENAME),
     'utf8',
   );
-  const config = yaml.load(configYaml) as Record<string, any>;
+  const config = yaml.load(configYaml) as Record<string, unknown>;
   // validate the configuration object 校验配置对象
   const validatedConfig = plainToInstance(YamlVariables, config, {
     enableImplicitConversion: true,

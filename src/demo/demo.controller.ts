@@ -7,8 +7,6 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  UsePipes,
-  ValidationPipe,
   ParseArrayPipe,
   Query,
   UseInterceptors,

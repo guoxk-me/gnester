@@ -19,12 +19,12 @@ export class DemoService {
   ) {}
   async create(createDemoDto: CreateDemoDto) {
     await this.demoRepository.save(createDemoDto);
-    console.log('createDemoDto', createDemoDto);
+    this.logger.debug('createDemoDto', createDemoDto);
     return 'This action adds a new demo';
   }
 
   findAll() {
-    this.cacheManager.set('foo', 'bar', 0);
+    void this.cacheManager.set('foo', 'bar', 0);
     return `This action returns all demo`;
   }
 
@@ -33,7 +33,7 @@ export class DemoService {
   }
 
   update(id: number, updateDemoDto: UpdateDemoDto) {
-    console.log('updateDemoDto', updateDemoDto);
+    this.logger.debug('updateDemoDto', updateDemoDto);
     return `This action updates a #${id} demo`;
   }
 
@@ -52,7 +52,10 @@ export class DemoService {
 
       await queryRunner.commitTransaction();
     } catch (err) {
-      console.error('err', err);
+      this.logger.error(
+        'Failed to create demo records in transaction',
+        err instanceof Error ? err.stack : undefined,
+      );
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();

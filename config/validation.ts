@@ -1,15 +1,28 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   Min,
   validateSync,
 } from 'class-validator';
 import { DbConnection, Environment } from './config.enums';
+
+function parseBoolean(value: unknown): unknown {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    return value.toLowerCase() === 'true';
+  }
+
+  return value;
+}
 
 class EnvironmentVariables {
   @IsEnum(Environment)
@@ -46,11 +59,13 @@ class EnvironmentVariables {
   @IsOptional()
   DB_DATABASE: string;
 
-  @IsString()
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
   @IsOptional()
-  DB_SYNCHRONIZE?: string;
+  DB_SYNCHRONIZE: boolean = false;
 
   @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
   @IsOptional()
   DB_AUTO_LOAD_ENTITIES: boolean = true;
 
@@ -61,9 +76,19 @@ class EnvironmentVariables {
   @IsNumber()
   @IsOptional()
   DB_RETRY_DELAY: number = 3000;
+
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['redis', 'rediss'],
+  })
+  @IsOptional()
+  REDIS_URL: string = 'redis://localhost:6379';
 }
 
-export function validate(config: Record<string, unknown>) {
+export function validate(
+  config: Record<string, unknown>,
+): EnvironmentVariables {
   // validate the configuration object 校验配置对象
   const validatedConfig = plainToInstance(EnvironmentVariables, config, {
     enableImplicitConversion: true,
