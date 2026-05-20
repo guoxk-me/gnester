@@ -10,7 +10,7 @@ import {
   Min,
   validateSync,
 } from 'class-validator';
-import { DbConnection, Environment } from './config.enums';
+import { DbConnection, Environment } from './config.types';
 
 function parseBoolean(value: unknown): unknown {
   if (typeof value === 'boolean') {
@@ -33,9 +33,22 @@ class EnvironmentVariables {
   @Max(65535)
   PORT: number;
 
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  ENABLE_MULTI_DATABASE: boolean = false;
+
+  @IsEnum(DbConnection)
+  @IsOptional()
+  PRIMARY_DB_TYPE: DbConnection = DbConnection.MYSQL;
+
   @IsEnum(DbConnection)
   @IsOptional()
   DB_TYPE: DbConnection = DbConnection.MYSQL;
+
+  @IsString()
+  @IsOptional()
+  PRIMARY_DB_HOST: string;
 
   @IsString()
   @IsOptional()
@@ -45,7 +58,17 @@ class EnvironmentVariables {
   @IsOptional()
   @Min(1)
   @Max(65535)
+  PRIMARY_DB_PORT: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(65535)
   DB_PORT: number;
+
+  @IsString()
+  @IsOptional()
+  PRIMARY_DB_USERNAME: string;
 
   @IsString()
   @IsOptional()
@@ -53,11 +76,24 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  PRIMARY_DB_PASSWORD: string;
+
+  @IsString()
+  @IsOptional()
   DB_PASSWORD: string;
 
   @IsString()
   @IsOptional()
+  PRIMARY_DB_DATABASE: string;
+
+  @IsString()
+  @IsOptional()
   DB_DATABASE: string;
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  PRIMARY_DB_SYNCHRONIZE: boolean = false;
 
   @IsBoolean()
   @Transform(({ value }) => parseBoolean(value))
@@ -67,7 +103,16 @@ class EnvironmentVariables {
   @IsBoolean()
   @Transform(({ value }) => parseBoolean(value))
   @IsOptional()
+  PRIMARY_DB_AUTO_LOAD_ENTITIES: boolean = true;
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
   DB_AUTO_LOAD_ENTITIES: boolean = true;
+
+  @IsNumber()
+  @IsOptional()
+  PRIMARY_DB_RETRY_ATTEMPTS: number = 10;
 
   @IsNumber()
   @IsOptional()
@@ -75,7 +120,55 @@ class EnvironmentVariables {
 
   @IsNumber()
   @IsOptional()
+  PRIMARY_DB_RETRY_DELAY: number = 3000;
+
+  @IsNumber()
+  @IsOptional()
   DB_RETRY_DELAY: number = 3000;
+
+  @IsEnum(DbConnection)
+  @IsOptional()
+  SECONDARY_DB_TYPE: DbConnection = DbConnection.MYSQL;
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_DB_HOST: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(65535)
+  SECONDARY_DB_PORT: number;
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_DB_USERNAME: string;
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_DB_PASSWORD: string;
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_DB_DATABASE: string;
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  SECONDARY_DB_SYNCHRONIZE: boolean = false;
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  SECONDARY_DB_AUTO_LOAD_ENTITIES: boolean = true;
+
+  @IsNumber()
+  @IsOptional()
+  SECONDARY_DB_RETRY_ATTEMPTS: number = 10;
+
+  @IsNumber()
+  @IsOptional()
+  SECONDARY_DB_RETRY_DELAY: number = 3000;
 
   @IsUrl({
     require_tld: false,

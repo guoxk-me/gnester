@@ -11,6 +11,7 @@ import {
   ValidateNested,
   validateSync,
 } from 'class-validator';
+import { YamlConfig } from './config.types';
 
 const YAML_CONFIG_FILENAME = 'config.yaml';
 
@@ -38,7 +39,7 @@ class YamlVariables {
   cache: CacheVariables;
 }
 
-export default () => {
+export default (): YamlConfig => {
   const configYaml = readFileSync(
     join(__dirname, YAML_CONFIG_FILENAME),
     'utf8',
