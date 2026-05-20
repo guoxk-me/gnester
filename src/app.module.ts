@@ -2,14 +2,20 @@ import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import KeyvRedis from '@keyv/redis';
-import databaseConfig from 'config/database.config';
 import configuration from 'config/configuration';
 import { validate } from 'config/validation';
+import { createMultiDatabaseImports } from './app-multi-database.imports';
+import { createSingleDatabaseImports } from './app-single-database.imports';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DemoModule } from './demo/demo.module';
+import { DemoConfigModule } from './features/demo-config/demo-config.module';
+import { DemoDatabaseModule } from './features/demo-database/demo-database.module';
+
+const isMultiDatabaseEnabled = process.env.ENABLE_MULTI_DATABASE === 'true';
+const databaseImports = isMultiDatabaseEnabled
+  ? createMultiDatabaseImports()
+  : createSingleDatabaseImports();
 
 @Module({
   imports: [
@@ -21,7 +27,7 @@ import { DemoModule } from './demo/demo.module';
       cache: true,
       validate,
     }),
-    TypeOrmModule.forRootAsync(databaseConfig.asProvider()),
+    ...databaseImports,
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
@@ -30,7 +36,8 @@ import { DemoModule } from './demo/demo.module';
         stores: [new KeyvRedis(configService.getOrThrow<string>('REDIS_URL'))],
       }),
     }),
-    DemoModule,
+    DemoConfigModule,
+    DemoDatabaseModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],

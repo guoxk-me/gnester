@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { Environment } from 'config/config.enums';
+import { Environment } from 'config/config.types';
 
 const logger = new Logger('Bootstrap');
 

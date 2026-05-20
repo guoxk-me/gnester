@@ -7,12 +7,21 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"config/**/*.ts\"",
     "start": "NODE_ENV=development nest start",
     "start:dev": "NODE_ENV=development nest start --watch",
     "start:debug": "NODE_ENV=development nest start --debug --watch",
     "start:prod": "NODE_ENV=production node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test,config}/**/*.ts\" --fix",
+    "typeorm": "typeorm-ts-node-commonjs -d config/typeorm.data-source.ts",
+    "migration:create": "typeorm migration:create",
+    "migration:generate": "pnpm typeorm migration:generate",
+    "migration:run": "pnpm typeorm migration:run",
+    "migration:revert": "pnpm typeorm migration:revert",
+    "typeorm:secondary": "typeorm-ts-node-commonjs -d config/typeorm.secondary-data-source.ts",
+    "migration:secondary:generate": "pnpm typeorm:secondary migration:generate",
+    "migration:secondary:run": "pnpm typeorm:secondary migration:run",
+    "migration:secondary:revert": "pnpm typeorm:secondary migration:revert",
     "test": "NODE_ENV=test jest",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:cov": "NODE_ENV=test jest --coverage",
@@ -68,20 +77,27 @@
     "typescript-eslint": "^8.58.1"
   },
   "jest": {
+    "rootDir": ".",
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/config"
+    ],
     "moduleFileExtensions": [
       "js",
       "json",
       "ts"
     ],
-    "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^config/(.*)$": "<rootDir>/config/$1"
+    },
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "coverage",
     "testEnvironment": "node"
   },
   "packageManager": "pnpm@11.1.2"
