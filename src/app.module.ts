@@ -15,6 +15,7 @@ import { DemoModule } from './demo/demo.module';
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
+      ignoreEnvFile: false,
       envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
       isGlobal: true,
       cache: true,
