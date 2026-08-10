@@ -16,6 +16,11 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterEach(async () => {
+    // AI modified: close broker clients and Nest lifecycle hooks after every application fixture. / AI 修改：每个应用 fixture 完成后关闭 broker client 与 Nest 生命周期钩子。
+    await app.close();
+  });
+
   it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')

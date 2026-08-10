@@ -1,98 +1,119 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# gnester
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+`gnester` is the microservice-oriented evolution of `gnester-lite`. The current
+runtime has an HTTP gateway and a standalone NestJS microservice connected by
+NATS request/reply.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+`gnester` 是 `gnester-lite` 面向微服务演进的版本。当前运行时由 HTTP gateway 与独立
+NestJS microservice 组成，二者通过 NATS request/reply 通信。
 
-## Description
+## Runtime topology / 运行拓扑
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```text
+HTTP client
+    │ /v1/demo-greeting/*
+    ▼
+gnester gateway :3000
+    │ DemoGreetingPort -> ClientProxy.send
+    │ x-request-id NATS header
+    ▼
+NATS Core
+    │ gnester.demo-greeting.v1.get
+    │ gnester.demo-greeting.v1.health
+    ▼
+demo-greeting-service (queue group)
+    │ NestFactory.createMicroservice + @MessagePattern
 ```
 
-## Compile and run the project
+- The gateway owns the public HTTP interface and calls only `DemoGreetingPort`.
+- Production uses `NatsDemoGreetingAdapter`; focused tests can replace the port.
+- The Demo service is broker-only and does not expose an HTTP port.
+- Cross-process contracts under `src/contracts` are framework-free and versioned.
+- Existing TypeORM, MongoDB, Redis, and schedule demos remain in the gateway during this incremental phase.
+
+- Gateway 拥有公共 HTTP interface，并且只调用 `DemoGreetingPort`。
+- 生产环境使用 `NatsDemoGreetingAdapter`；聚焦测试可以替换该 port。
+- Demo service 仅连接 broker，不暴露 HTTP 端口。
+- `src/contracts` 下的跨进程 contract 不依赖框架，并显式版本化。
+- 现有 TypeORM、MongoDB、Redis 与 schedule 示例在本次增量阶段仍保留于 gateway。
+
+## Requirements / 环境要求
+
+- Node.js 24
+- pnpm 11
+- The official [`nats-server`](https://docs.nats.io/running-a-nats-service/introduction/installation) binary
+- MySQL and Redis for the current gateway composition
+
+- Node.js 24
+- pnpm 11
+- 官方 [`nats-server`](https://docs.nats.io/running-a-nats-service/introduction/installation/) 二进制程序
+- 当前 gateway 装配所需的 MySQL 与 Redis
+
+## Install / 安装
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm install
 ```
 
-## Run tests
+## Run the topology / 启动运行拓扑
+
+Terminal 1 — broker / 终端 1 — broker：
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+nats-server -a 127.0.0.1 -p 4222
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Terminal 2 — service / 终端 2 — service：
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm run start:demo-service:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Terminal 3 — gateway / 终端 3 — gateway：
 
-## Resources
+```bash
+pnpm run start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Verify the complete HTTP → NATS → service path / 验证完整的 HTTP → NATS → service 路径：
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+curl -i http://127.0.0.1:3000/v1/demo-greeting/Codex
+curl -i http://127.0.0.1:3000/v1/demo-greeting/health
+```
 
-## Support
+Both responses include `x-request-id`. A valid incoming UUID v4 value is
+preserved; otherwise the gateway generates one.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+两个响应都包含 `x-request-id`。合法的入站 UUID v4 会被保留，否则由 gateway 生成。
 
-## Stay in touch
+## Quality gates / 质量门禁
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+pnpm run format:check
+pnpm run lint:check
+pnpm run typecheck
+pnpm run test
+pnpm run build
+pnpm run verify:artifact
+pnpm run verify:architecture
+pnpm run verify:demo-service-start
+pnpm run test:e2e
+```
 
-## License
+Broker-dependent gates start an isolated official NATS server. They resolve
+`NATS_SERVER_BIN` first and then `nats-server` from `PATH`; they never reuse a
+developer broker.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+依赖 broker 的门禁会自行启动隔离的官方 NATS server。脚本优先读取 `NATS_SERVER_BIN`，
+否则从 `PATH` 查找 `nats-server`；不会复用开发环境中的 broker。
+
+## Documentation / 文档
+
+- [Architecture / 架构](docs/architecture.md)
+- [Migration from gnester-lite / 从 gnester-lite 迁移](docs/gnester-lite-migration.md)
+- [Configuration / 配置](docs/configuration.md)
+- [Database / 数据库](docs/database.md)
+- [Official NestJS microservice transport research / NestJS 官方微服务 transport 调研](docs/research/nestjs-microservices-official.md)
+- [NestJS microservices basics / NestJS 微服务基础](https://docs.nestjs.com/microservices/basics)
+- [NestJS NATS transport / NestJS NATS transport](https://docs.nestjs.com/microservices/nats)

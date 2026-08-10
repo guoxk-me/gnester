@@ -1,5 +1,7 @@
 import { plainToInstance, Transform } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNumber,
@@ -11,6 +13,7 @@ import {
   validateSync,
 } from 'class-validator';
 import { DbConnection, Environment } from './config.types';
+import { natsServerUrls } from './nats.validation';
 
 function parseBoolean(value: unknown): unknown {
   if (typeof value === 'boolean') {
@@ -32,11 +35,6 @@ class EnvironmentVariables {
   @Min(0)
   @Max(65535)
   PORT: number;
-
-  @IsBoolean()
-  @Transform(({ value }) => parseBoolean(value))
-  @IsOptional()
-  ENABLE_MULTI_DATABASE: boolean = false;
 
   @IsEnum(DbConnection)
   @IsOptional()
@@ -170,6 +168,48 @@ class EnvironmentVariables {
   @IsOptional()
   SECONDARY_DB_RETRY_DELAY: number = 3000;
 
+  @IsString()
+  @IsOptional()
+  MONGO_URI: string = 'mongodb://localhost:27017';
+
+  @IsString()
+  @IsOptional()
+  MONGO_DATABASE: string = 'gnester';
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  MONGO_AUTO_CREATE: boolean = true;
+
+  @IsNumber()
+  @IsOptional()
+  MONGO_RETRY_ATTEMPTS: number = 10;
+
+  @IsNumber()
+  @IsOptional()
+  MONGO_RETRY_DELAY: number = 3000;
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_MONGO_URI: string = 'mongodb://localhost:27017';
+
+  @IsString()
+  @IsOptional()
+  SECONDARY_MONGO_DATABASE: string = 'gnester_audit';
+
+  @IsBoolean()
+  @Transform(({ value }) => parseBoolean(value))
+  @IsOptional()
+  SECONDARY_MONGO_AUTO_CREATE: boolean = true;
+
+  @IsNumber()
+  @IsOptional()
+  SECONDARY_MONGO_RETRY_ATTEMPTS: number = 10;
+
+  @IsNumber()
+  @IsOptional()
+  SECONDARY_MONGO_RETRY_DELAY: number = 3000;
+
   @IsUrl({
     require_tld: false,
     require_protocol: true,
@@ -177,6 +217,32 @@ class EnvironmentVariables {
   })
   @IsOptional()
   REDIS_URL: string = 'redis://localhost:6379';
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsUrl(
+    {
+      require_tld: false,
+      require_protocol: true,
+      protocols: ['nats', 'tls'],
+    },
+    { each: true },
+  )
+  @Transform(({ value }) => natsServerUrls(value))
+  @IsOptional()
+  NATS_SERVERS: string[] = ['nats://127.0.0.1:4222'];
+
+  @IsNumber()
+  @Min(100)
+  @Max(30_000)
+  @IsOptional()
+  NATS_CONNECTION_TIMEOUT_MS: number = 2000;
+
+  @IsNumber()
+  @Min(1)
+  @Max(30_000)
+  @IsOptional()
+  DEMO_GREETING_REQUEST_TIMEOUT_MS: number = 3000;
 }
 
 export function validate(

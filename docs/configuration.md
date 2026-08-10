@@ -29,14 +29,14 @@ Secret or environment-specific? -> .env / secret manager
 
 ## Current Flow / 当前加载流程
 
-Config is wired in `src/app.module.ts`:
+Gateway config is wired in `src/app.module.ts`:
 
-配置入口在 `src/app.module.ts`：
+Gateway 配置入口在 `src/app.module.ts`：
 
 ```ts
 ConfigModule.forRoot({
   load: [configuration],
-  envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+  envFilePath: environmentFilePaths(),
   isGlobal: true,
   cache: true,
   validate,
@@ -45,11 +45,18 @@ ConfigModule.forRoot({
 
 Load behavior / 加载行为：
 
-- `NODE_ENV=development` -> `.env.development`
-- `NODE_ENV=test` -> `.env.test`
-- `NODE_ENV=production` -> `.env.production`
+- Precedence: `.env.<environment>.local` -> `.env.<environment>` -> `.env.local` -> `.env`.
+- 优先级：`.env.<environment>.local` -> `.env.<environment>` -> `.env.local` -> `.env`。
 - Runtime env values override `.env` file values.  
   运行时环境变量优先于 `.env` 文件。
+
+The standalone Demo service preloads the same environment-file precedence
+before `NestFactory.createMicroservice` because NATS transport options are
+required while Nest creates the process. Its `ConfigModule` then validates only
+the values owned by that service.
+
+独立 Demo service 会在 `NestFactory.createMicroservice` 前预加载相同的环境文件优先级，
+因为 Nest 创建进程时就需要 NATS transport 选项。其 `ConfigModule` 随后仅校验该服务拥有的配置。
 
 ## Key Files / 关键文件
 
@@ -59,10 +66,16 @@ Load behavior / 加载行为：
   加载并校验 YAML。
 - `config/validation.ts`: validates `.env.*` and runtime env.  
   校验 `.env.*` 与运行时环境变量。
+- `config/demo-greeting-service.validation.ts`: validates only the standalone Demo service environment.
+  仅校验独立 Demo service 自己拥有的环境配置。
+- `config/nats.validation.ts`: converts a comma-separated broker list into validated URLs.
+  将逗号分隔的 broker 列表转换为经过校验的 URL。
 - `config/database.config.ts`: builds TypeORM config.  
   构建 TypeORM 配置。
 - `src/app.module.ts`: connects config to Nest modules.  
   将配置接入 Nest 模块。
+- `src/processes/demo-greeting-service.options.ts`: creates the standalone NATS server options.
+  创建独立服务的 NATS server 选项。
 - `nest-cli.json`: copies YAML files into `dist/config`.  
   构建时复制 YAML 到 `dist/config`。
 
@@ -83,7 +96,11 @@ Env variables:
 ```text
 NODE_ENV
 PORT
-ENABLE_MULTI_DATABASE
+NATS_SERVERS
+NATS_CONNECTION_TIMEOUT_MS
+DEMO_GREETING_REQUEST_TIMEOUT_MS
+DEMO_GREETING_NATS_QUEUE_GROUP
+DEMO_GREETING_NATS_GRACE_PERIOD_MS
 PRIMARY_DB_TYPE
 PRIMARY_DB_HOST
 PRIMARY_DB_PORT
@@ -113,10 +130,18 @@ Notes / 注意：
   `cache.ttl` 来自 YAML。
 - `REDIS_URL` comes from env.  
   `REDIS_URL` 来自 env。
+- `NATS_SERVERS` is a comma-separated list of `nats://` or `tls://` broker URLs and is exposed to Nest as `string[]`.
+  `NATS_SERVERS` 是逗号分隔的 `nats://` 或 `tls://` broker URL，向 Nest 暴露为 `string[]`。
+- The gateway owns `NATS_CONNECTION_TIMEOUT_MS` and `DEMO_GREETING_REQUEST_TIMEOUT_MS`; it connects during bootstrap and bounds every request/reply call.
+  Gateway 拥有 `NATS_CONNECTION_TIMEOUT_MS` 与 `DEMO_GREETING_REQUEST_TIMEOUT_MS`；它在启动阶段连接 broker，并限制每次 request/reply 调用时间。
+- The standalone service additionally owns `DEMO_GREETING_NATS_QUEUE_GROUP` and `DEMO_GREETING_NATS_GRACE_PERIOD_MS`.
+  独立 service 还拥有 `DEMO_GREETING_NATS_QUEUE_GROUP` 与 `DEMO_GREETING_NATS_GRACE_PERIOD_MS`。
+- The Demo service has no base URL, host, HTTP port, or HTTP health route. Its message health subject is `gnester.demo-greeting.v1.health`.
+  Demo service 没有 base URL、host、HTTP port 或 HTTP health 路由；其消息健康 subject 为 `gnester.demo-greeting.v1.health`。
 - `PRIMARY_DB_*` is preferred for the main database; legacy `DB_*` is still accepted as a fallback.  
   主数据库推荐使用 `PRIMARY_DB_*`；旧的 `DB_*` 仍作为兼容兜底。
-- `SECONDARY_DB_*` is used only when `ENABLE_MULTI_DATABASE=true`.  
-  `SECONDARY_DB_*` 仅在 `ENABLE_MULTI_DATABASE=true` 时使用。
+- `SECONDARY_DB_*` is used only when `enableMultiDatabase` is explicitly enabled in `src/app-features.ts`.
+  `SECONDARY_DB_*` 仅在 `src/app-features.ts` 中显式启用 `enableMultiDatabase` 时使用。
 - `PRIMARY_DB_SYNCHRONIZE` and `SECONDARY_DB_SYNCHRONIZE` are forced off in production by `config/database.config.ts`.  
   `PRIMARY_DB_SYNCHRONIZE` 和 `SECONDARY_DB_SYNCHRONIZE` 在生产环境会被 `config/database.config.ts` 强制关闭。
 
@@ -169,6 +194,8 @@ Also check / 同时检查：
   保持 `.env.production` 与运行时安全策略一致。
 - If YAML structure changes, confirm `nest-cli.json` still copies it to `dist/config`.  
   如果 YAML 结构变化，确认 `nest-cli.json` 仍会复制到 `dist/config`。
+- Broker-dependent gates require the official `nats-server`; set `NATS_SERVER_BIN` or put it on `PATH`. Each gate starts an isolated loopback broker.
+  依赖 broker 的门禁需要官方 `nats-server`；可设置 `NATS_SERVER_BIN` 或将其加入 `PATH`。每个门禁都会启动隔离的 loopback broker。
 
 ## Known Improvements / 已知可优化点
 

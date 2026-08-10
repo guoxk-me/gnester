@@ -14,6 +14,8 @@ export enum DbConnection {
 }
 
 export const SECONDARY_DATA_SOURCE = 'secondaryDataSource';
+export const PRIMARY_MONGO_CONNECTION = 'primaryMongoConnection';
+export const SECONDARY_MONGO_CONNECTION = 'secondaryMongoConnection';
 
 export interface AppConfig {
   readonly name: string;
@@ -42,4 +44,13 @@ export interface DatabaseOptions {
   readonly autoLoadEntities: boolean;
   readonly retryAttempts: number;
   readonly retryDelay: number;
+}
+
+export interface MongoDatabaseOptions {
+  readonly connectionName?: string;
+  readonly uri: string;
+  readonly dbName: string;
+  readonly retryAttempts: number;
+  readonly retryDelay: number;
+  readonly autoCreate: boolean;
 }
